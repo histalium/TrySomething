@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace TrySomething
 {
@@ -34,6 +35,10 @@ namespace TrySomething
             Iterate(input1, t =>
             {
                 Console.WriteLine(t);
+
+                StackTrace st = new StackTrace(true);
+                Console.WriteLine($"stack size: {st.FrameCount}");
+
                 return t == "quit";
             });
         }
@@ -50,11 +55,37 @@ namespace TrySomething
 
         static void Iterate(ConsoleInputContext context, Func<string, bool> action)
         {
+            var res = IterateLowStack(context, action);
+            while (res != null)
+            {
+                res = res.Run();
+            }
+        }
+
+        static LowStack IterateLowStack(ConsoleInputContext context, Func<string, bool> action)
+        {
             var next = context.Next();
             var done = action(next.Value);
             if (!done)
             {
-                Iterate(next, action);
+                return new LowStack(() => IterateLowStack(next, action));
+            }
+
+            return null;
+        }
+
+        class LowStack
+        {
+            private readonly Func<LowStack> action;
+
+            public LowStack(Func<LowStack> action)
+            {
+                this.action = action;
+            }
+
+            public LowStack Run()
+            {
+                return action();
             }
         }
 
