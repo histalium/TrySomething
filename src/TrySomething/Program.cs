@@ -20,7 +20,83 @@ namespace TrySomething
             );
 
             Console.WriteLine(result);
+
+            var input1 = new EmptyConsoleInputContext(NextConsoleInput());
+            var input2 = input1.Next();
+            Console.WriteLine(input2.Value);
+            var input3 = input1.Next();
+            Console.WriteLine(input3.Value);
+            var input4 = input2.Next();
+            Console.WriteLine(input4.Value);
+            var input5 = input3.Next();
+            Console.WriteLine(input5.Value);
+
+            Iterate(input1, t =>
+            {
+                Console.WriteLine(t);
+                return t == "quit";
+            });
         }
+
+        static void Iterate(EmptyConsoleInputContext context, Func<string, bool> action)
+        {
+            var next = context.Next();
+            var done = action(next.Value);
+            if (!done)
+            {
+                Iterate(next, action);
+            }
+        }
+
+        static void Iterate(ConsoleInputContext context, Func<string, bool> action)
+        {
+            var next = context.Next();
+            var done = action(next.Value);
+            if (!done)
+            {
+                Iterate(next, action);
+            }
+        }
+
+        static Func<ConsoleInputContext> NextConsoleInput()
+        {
+            ConsoleInputContext context = null;
+
+            Func<ConsoleInputContext> next = () =>
+            {
+                if (context == null)
+                {
+                    var input = Console.ReadLine();
+                    context = new ConsoleInputContext(input, NextConsoleInput());
+                }
+                return context;
+            };
+
+            return next;
+        }
+    }
+
+    class EmptyConsoleInputContext
+    {
+        public EmptyConsoleInputContext(Func<ConsoleInputContext> next)
+        {
+            Next = next;
+        }
+
+        public Func<ConsoleInputContext> Next { get; }
+    }
+
+    class ConsoleInputContext
+    {
+        public ConsoleInputContext(string value, Func<ConsoleInputContext> next)
+        {
+            Value = value;
+            Next = next;
+        }
+
+        public string Value { get; }
+
+        public Func<ConsoleInputContext> Next { get; }
     }
 
     class Test1
